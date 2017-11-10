@@ -41,7 +41,7 @@ import order from './order'
 import position from './position'
 import {Graph} from 'ciena-graphlib'
 
-function runLayout (g, time) {
+function runLayout (g, time, crossingMinimisation) {
   time('    makeSpaceForEdgeLabels', function () { makeSpaceForEdgeLabels(g) })
   time('    removeSelfEdges', function () { removeSelfEdges(g) })
   time('    acyclic', function () { acyclicRun(g) })
@@ -56,7 +56,7 @@ function runLayout (g, time) {
   time('    normalize.run', function () { normalizeRun(g) })
   time('    parentDummyChains', function () { parentDummyChains(g) })
   time('    addBorderSegments', function () { addBorderSegments(g) })
-  time('    order', function () { order(g) })
+  time('    order', function () { order(g, crossingMinimisation) })
   time('    insertSelfEdges', function () { insertSelfEdges(g) })
   time('    adjustCoordinateSystem', function () { coordinateSystemAdjust(g) })
   time('    position', function () { position(g) })
@@ -412,10 +412,11 @@ function canonicalize (attrs) {
 
 export default function layout (g, opts) {
   var timeFn = opts && opts.debugTiming ? time : notime
+  var crossingMinimisation = !(opts && opts.crossingMinimisation === false)
   timeFn('layout', function () {
     var layoutGraph = timeFn('  buildLayoutGraph',
                                function () { return buildLayoutGraph(g) })
-    timeFn('  runLayout', function () { runLayout(layoutGraph, timeFn) })
+    timeFn('  runLayout', function () { runLayout(layoutGraph, timeFn, crossingMinimisation) })
     timeFn('  updateInputGraph', function () { updateInputGraph(g, layoutGraph) })
   })
 }

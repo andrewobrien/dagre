@@ -48,7 +48,7 @@ function assignOrder (g, layering) {
  *    1. Graph nodes will have an "order" attribute based on the results of the
  *       algorithm.
  */
-export default function order (g) {
+export default function order (g, crossingMinimisation = true) {
   var mr = maxRank(g)
   var downLayerGraphs = buildLayerGraphs(g, _.range(1, mr + 1), 'inEdges')
   var upLayerGraphs = buildLayerGraphs(g, _.range(mr - 1, -1, -1), 'outEdges')
@@ -58,17 +58,20 @@ export default function order (g) {
 
   var bestCC = Number.POSITIVE_INFINITY
   var best
+  if (crossingMinimisation) {
+    for (var i = 0, lastBest = 0; lastBest < 4; ++i, ++lastBest) {
+      sweepLayerGraphs(i % 2 ? downLayerGraphs : upLayerGraphs, i % 4 >= 2)
 
-  for (var i = 0, lastBest = 0; lastBest < 4; ++i, ++lastBest) {
-    sweepLayerGraphs(i % 2 ? downLayerGraphs : upLayerGraphs, i % 4 >= 2)
-
-    layering = buildLayerMatrix(g)
-    var cc = crossCount(g, layering)
-    if (cc < bestCC) {
-      lastBest = 0
-      best = _.cloneDeep(layering)
-      bestCC = cc
+      layering = buildLayerMatrix(g)
+      var cc = crossCount(g, layering)
+      if (cc < bestCC) {
+        lastBest = 0
+        best = _.cloneDeep(layering)
+        bestCC = cc
+      }
     }
+  } else {
+    best = _.cloneDeep(buildLayerMatrix(g))
   }
 
   assignOrder(g, best)
